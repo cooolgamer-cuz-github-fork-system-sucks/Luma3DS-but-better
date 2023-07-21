@@ -292,6 +292,35 @@ void menuThreadMain(void)
             menuLeave();
         }
 
+        // force reboot combo key
+        if(((scanHeldKeys() & (KEY_A | KEY_B | KEY_X | KEY_Y | KEY_START)) == (KEY_A | KEY_B | KEY_X | KEY_Y | KEY_START)))
+        {
+            svcKernelSetState(7);
+            __builtin_unreachable();
+        }
+
+        // toggle bottom screen combo
+        if(((scanHeldKeys() & (KEY_SELECT | KEY_START)) == (KEY_SELECT | KEY_START)))
+        {
+            u8 result, botStatus;
+            mcuHwcInit();
+            MCUHWC_ReadRegister(0x0F, &result, 1); // https://www.3dbrew.org/wiki/I2C_Registers#Device_3
+            mcuHwcExit();  
+            botStatus = (result >> 5) & 1; // right shift result to bit 5 ("Bottom screen backlight on") and perform bitwise AND with 1
+
+            gspLcdInit();
+            if(botStatus)
+            {
+                GSPLCD_PowerOffBacklight(BIT(GSP_SCREEN_BOTTOM));
+            }
+            else
+            {
+                GSPLCD_PowerOnBacklight(BIT(GSP_SCREEN_BOTTOM));
+            }
+            gspLcdExit();
+            while (scanHeldKeys() & (KEY_SELECT | KEY_START));
+        }
+
         if (saveSettingsRequest) {
             LumaConfig_SaveSettings();
             saveSettingsRequest = false;
@@ -500,6 +529,35 @@ void menuShow(Menu *root)
             selectedItem = menuAdvanceCursor(selectedItem, numItems, -1);
             if (menuItemIsHidden(&currentMenu->items[selectedItem]))
                 selectedItem = menuAdvanceCursor(selectedItem, numItems, -1);
+        }
+        else if(pressed & KEY_START)
+        {
+            if (isServiceUsable("nwm::EXT"))
+            {
+                u8 wireless = (*(vu8 *)((0x10140000 | (1u << 31)) + 0x180));
+                nwmExtInit();
+                NWMEXT_ControlWirelessEnabled(!wireless);
+                nwmExtExit();
+            }
+        }
+        else if(pressed & KEY_SELECT)
+        {
+            // Toggle LEDs
+            mcuHwcInit();
+            u8 result;
+            MCUHWC_ReadRegister(0x28, &result, 1);
+            result = ~result;
+            MCUHWC_WriteRegister(0x28, &result, 1);
+            mcuHwcExit();
+        }
+        else if(pressed & KEY_Y)
+        {
+            // Force Blue LED
+            mcuHwcInit();
+            u8 result;
+            result = 1;
+            MCUHWC_WriteRegister(0x29, &result, 1);
+            mcuHwcExit();
         }
 
         Draw_Lock();
