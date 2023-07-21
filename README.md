@@ -21,6 +21,7 @@ Since v8.0, Luma3DS has its own in-game menu, triggerable by <kbd>L+Down+Select<
   - Press Select on Rosalina menu to toggle LEDs
   - Added permanent brightness calibration by Nutez
 - Changed colors on config menu because why not
+- Continue running after a errdisp error happens (you can press the instant reboot combo to reboot if nothing works)
 #
 ### Compiling
 * Prerequisites
