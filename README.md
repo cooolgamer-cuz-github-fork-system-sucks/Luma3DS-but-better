@@ -16,7 +16,7 @@ Since v8.0, Luma3DS has its own in-game menu, triggerable by <kbd>L+Down+Select<
 - Restored UNITINFO and enable rosalina on safe_firm options on the luma config menu (TWL patch option is now with "enable external firms and modules")
 - Added shortcuts:
   - Press start + select to toggle bottom screen (nice when you watch videos)
-  - Press A + B + X + Y + Start instantly reboot the console. Useful in case of freeze, don't complain if your sdcard get corrupted because of this.
+  - Press A + B + X + Y + Start to instantly reboot the console. Useful in case of freeze, but don't complain if your sdcard get corrupted because of this.
   - Press Start on Rosalina menu to toggle wifi
   - Press Select on Rosalina menu to toggle LEDs (and press Y to force blue led as a workaround when the battery is low)
 - Added permanent brightness calibration by Nutez
