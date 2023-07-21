@@ -19,6 +19,7 @@ Since v8.0, Luma3DS has its own in-game menu, triggerable by <kbd>L+Down+Select<
   - Press A + B + X + Y + Start to instantly reboot the console. Useful in case of freeze, but don't complain if your sdcard get corrupted because of this.
   - Press Start on Rosalina menu to toggle wifi
   - Press Select on Rosalina menu to toggle LEDs (and press Y to force blue led as a workaround when the battery is low)
+- Added extended brightness presets
 - Added permanent brightness calibration by Nutez
 - Changed colors on config menu because why not
 - Continue running after a errdisp error happens (you can press the instant reboot combo to reboot if nothing works)
