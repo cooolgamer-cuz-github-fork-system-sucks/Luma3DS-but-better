@@ -318,7 +318,7 @@ void menuThreadMain(void)
                 GSPLCD_PowerOnBacklight(BIT(GSP_SCREEN_BOTTOM));
             }
             gspLcdExit();
-            while (scanHeldKeys() & (KEY_SELECT | KEY_START));
+            while (!(waitInput() & (KEY_SELECT | KEY_START)));
         }
 
         if (saveSettingsRequest) {
