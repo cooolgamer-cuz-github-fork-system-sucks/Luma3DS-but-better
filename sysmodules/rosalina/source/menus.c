@@ -232,7 +232,7 @@ void RosalinaMenu_ChangeScreenBrightness(void)
             trueMax
         );
         posY = Draw_DrawString(10, posY, COLOR_WHITE, "Controls: Up/Down for +-1, Right/Left for +-10.\n");
-        posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, "Hold L/R for extended limits. \n\n", minLum);
+        posY = Draw_DrawFormattedString(10, posY, COLOR_WHITE, "Hold L/R for extended limits.\n\n");
         posY = Draw_DrawString(10, posY, COLOR_WHITE, "Press A to start, B to exit.\n\n");
 
         posY = Draw_DrawString(10, posY, COLOR_RED, "WARNING: \n");
