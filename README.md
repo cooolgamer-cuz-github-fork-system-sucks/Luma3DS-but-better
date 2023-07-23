@@ -20,6 +20,7 @@ Since v8.0, Luma3DS has its own in-game menu, triggerable by <kbd>L+Down+Select<
   - Press Start on Rosalina menu to toggle wifi -> [From here](https://github.com/DullPointer/Luma3DS/commit/c1a20558bed3d792d54069719a898006af20ba85)
   - Press Select on Rosalina menu to toggle LEDs -> [From this](https://github.com/DullPointer/Luma3DS/commit/fa70d374c00e39dee8b9ef54f60deb1da35a0c51) (and press Y to force blue led as a workaround when the battery is low)
 - Added n3ds clock + L2 status in rosalina menu -> [From here](https://github.com/DullPointer/Luma3DS/commit/2dbfa8b5c9b719b7f3056691f54332f42da6de8d)
+- Added Software Volume Control -> [From here](https://github.com/DullPointer/Luma3DS/commit/dc636d82492d1e87eb51785fa7f2a98617e7ece9)
 - Added extended brightness presets -> [From this](https://github.com/DullPointer/Luma3DS/commit/83e8d471a377bc6960fae00d6694f5fe86dcca42)
 - Added permanent brightness calibration by Nutez -> [From here](https://github.com/DullPointer/Luma3DS/commit/0e67a667077f601680f74ddc10ef88a799a5a7ad)
 - Changed colors on config menu because why not
