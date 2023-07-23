@@ -15,12 +15,12 @@ Since v8.0, Luma3DS has its own in-game menu, triggerable by <kbd>L+Down+Select<
 - Removed auto-copy to ctrnand and creating essential files backup
 - Restored UNITINFO and enable rosalina on safe_firm options on the luma config menu (TWL patch option is now with "enable external firms and modules")
 - Added shortcuts:
-  - Press start + select to toggle bottom screen (nice when you watch videos)
+  - Press start + select to toggle bottom screen (nice when you watch videos) inspired by [This](https://github.com/DullPointer/Luma3DS/commit/9fea831656446cbaa2b5b4f6364407bb1b35dee7)
   - Press A + B + X + Y + Start to instantly reboot the console. Useful in case of freeze, but don't complain if your sdcard get corrupted because of this.
-  - Press Start on Rosalina menu to toggle wifi
-  - Press Select on Rosalina menu to toggle LEDs (and press Y to force blue led as a workaround when the battery is low)
-- Added extended brightness presets
-- Added permanent brightness calibration by Nutez
+  - Press Start on Rosalina menu to toggle wifi -> [From here](https://github.com/DullPointer/Luma3DS/commit/c1a20558bed3d792d54069719a898006af20ba85)
+  - Press Select on Rosalina menu to toggle LEDs -> [From this](https://github.com/DullPointer/Luma3DS/commit/fa70d374c00e39dee8b9ef54f60deb1da35a0c51) (and press Y to force blue led as a workaround when the battery is low)
+- Added extended brightness presets -> [From this](https://github.com/DullPointer/Luma3DS/commit/83e8d471a377bc6960fae00d6694f5fe86dcca42)
+- Added permanent brightness calibration by Nutez -> [From here](https://github.com/DullPointer/Luma3DS/commit/0e67a667077f601680f74ddc10ef88a799a5a7ad)
 - Changed colors on config menu because why not
 - Continue running after a errdisp error happens (you can press the instant reboot combo to reboot if nothing works)
 #
