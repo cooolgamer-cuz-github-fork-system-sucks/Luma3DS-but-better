@@ -39,6 +39,7 @@
 #include "plugin.h"
 #include "menus/screen_filters.h"
 #include "shell.h"
+#include "volume.h"
 
 u32 menuCombo = 0;
 bool isHidInitialized = false;
@@ -179,6 +180,9 @@ static u8 ALIGN(8) menuThreadStack[0x3000];
 static float batteryPercentage;
 static float batteryVoltage;
 static u8 batteryTemperature;
+// volume
+static u8 volumeSlider[2];
+static u8 dspVolumeSlider[2];
 
 static Result menuUpdateMcuInfo(void)
 {
@@ -225,6 +229,11 @@ static Result menuUpdateMcuInfo(void)
         // If it has failed, mcuFwVersion will be set to 0 again
         mcuFwVersion = SYSTEM_VERSION(major - 0x10, minor, 0);
     }
+
+    // https://www.3dbrew.org/wiki/I2C_Registers#Device_3
+    MCUHWC_ReadRegister(0x58, dspVolumeSlider, 2); // Register-mapped ADC register
+    MCUHWC_ReadRegister(0x27, volumeSlider + 0, 1); // Raw volume slider state
+    MCUHWC_ReadRegister(0x09, volumeSlider + 1, 1); // Volume slider state
 
     svcCloseHandle(*mcuHwcHandlePtr);
     return res;
@@ -426,6 +435,19 @@ static void menuDraw(Menu *menu, u32 selected)
             percentageInt, percentageFrac
         );
         Draw_DrawString(SCREEN_BOT_WIDTH - 10 - SPACING_X * n, SCREEN_BOT_HEIGHT - 20, COLOR_WHITE, buf);
+
+        float coe = Volume_ExtractVolume(dspVolumeSlider[0], dspVolumeSlider[1], volumeSlider[0]);
+        u32 out = (u32)((coe * 100.0F) + (1 / 256.0F));
+        char volBuf[32];
+        int n2 = sprintf(volBuf, "Volume: %lu%%", out);
+        if(miniSocEnabled)
+        {
+            Draw_DrawString(SCREEN_BOT_WIDTH - 10 - SPACING_X * n2, SCREEN_BOT_HEIGHT - 30, COLOR_WHITE, volBuf);
+        }
+        else 
+        {
+            Draw_DrawString(SCREEN_BOT_WIDTH - 10 - SPACING_X * n2, 10, COLOR_WHITE, volBuf);
+        }
     }
     else
         Draw_DrawFormattedString(SCREEN_BOT_WIDTH - 10 - SPACING_X * 19, SCREEN_BOT_HEIGHT - 20, COLOR_WHITE, "%19s", "");

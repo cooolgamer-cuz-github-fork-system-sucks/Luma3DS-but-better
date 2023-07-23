@@ -32,6 +32,7 @@
 #include "utils.h"
 #include "ifile.h"
 #include "luminance.h"
+#include "volume.h"
 
 Menu sysconfigMenu = {
     "System configuration menu",
@@ -40,6 +41,7 @@ Menu sysconfigMenu = {
         { "Toggle Power Button", METHOD, .method=&SysConfigMenu_TogglePowerButton },
         { "Toggle Power to Card Slot", METHOD, .method=&SysConfigMenu_ToggleCardIfPower},
         { "Permanent Brightness Recalibration", METHOD, .method = &Luminance_RecalibrateBrightnessDefaults },
+        { "Software Volume Control", METHOD, .method = &Volume_ControlVolume },
         { "Tips", METHOD, .method = &SysConfigMenu_Tip },
         {},
     }
