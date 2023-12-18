@@ -499,6 +499,31 @@ static int configIniHandler(void* user, const char* section, const char* name, c
             CHECK_PARSE_OPTION(parseBoolOption(&opt, value));
             cfg->topScreenFilter.invert = opt;
             return 1;
+        } else if (strcmp(name, "screen_filters_top_cct_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 1000, 25100));
+            cfg->topScreenFilterNight.cct = (u32)opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_top_gamma_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, 0, 1411 * FLOAT_CONV_MULT));
+            cfg->topScreenFilterNight.gammaEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_top_contrast_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, 0, 255 * FLOAT_CONV_MULT));
+            cfg->topScreenFilterNight.contrastEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_top_brightness_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, -1 * FLOAT_CONV_MULT, 1 * FLOAT_CONV_MULT));
+            cfg->topScreenFilterNight.brightnessEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_top_invert_night") == 0) {
+            bool opt;
+            CHECK_PARSE_OPTION(parseBoolOption(&opt, value));
+            cfg->topScreenFilterNight.invert = opt;
+            return 1;
         } else if (strcmp(name, "screen_filters_bot_cct") == 0) {
             s64 opt;
             CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 1000, 25100));
@@ -523,6 +548,31 @@ static int configIniHandler(void* user, const char* section, const char* name, c
             bool opt;
             CHECK_PARSE_OPTION(parseBoolOption(&opt, value));
             cfg->bottomScreenFilter.invert = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_bot_cct_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 1000, 25100));
+            cfg->bottomScreenFilterNight.cct = (u32)opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_bot_gamma_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, 0, 1411 * FLOAT_CONV_MULT));
+            cfg->bottomScreenFilterNight.gammaEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_bot_contrast_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, 0, 255 * FLOAT_CONV_MULT));
+            cfg->bottomScreenFilterNight.contrastEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_bot_brightness_night") == 0) {
+            s64 opt;
+            CHECK_PARSE_OPTION(parseDecFloatOption(&opt, value, -1 * FLOAT_CONV_MULT, 1 * FLOAT_CONV_MULT));
+            cfg->bottomScreenFilterNight.brightnessEnc = opt;
+            return 1;
+        } else if (strcmp(name, "screen_filters_bot_invert_night") == 0) {
+            bool opt;
+            CHECK_PARSE_OPTION(parseBoolOption(&opt, value));
+            cfg->bottomScreenFilterNight.invert = opt;
             return 1;
         } else {
             CHECK_PARSE_OPTION(-1);
@@ -620,18 +670,30 @@ static size_t saveLumaIniConfigToStr(char *out)
     int pinNumDigits = pinOptionToDigits[MULTICONFIG(PIN)];
 
     char topScreenFilterGammaStr[32];
+    char topScreenFilterGammaStrNight[32];
     char topScreenFilterContrastStr[32];
+    char topScreenFilterContrastStrNight[32];
     char topScreenFilterBrightnessStr[32];
+    char topScreenFilterBrightnessStrNight[32];
     encodedFloatToString(topScreenFilterGammaStr, cfg->topScreenFilter.gammaEnc);
+    encodedFloatToString(topScreenFilterGammaStrNight, cfg->topScreenFilterNight.gammaEnc);
     encodedFloatToString(topScreenFilterContrastStr, cfg->topScreenFilter.contrastEnc);
+    encodedFloatToString(topScreenFilterContrastStrNight, cfg->topScreenFilterNight.contrastEnc);
     encodedFloatToString(topScreenFilterBrightnessStr, cfg->topScreenFilter.brightnessEnc);
+    encodedFloatToString(topScreenFilterBrightnessStrNight, cfg->topScreenFilterNight.brightnessEnc);
 
     char bottomScreenFilterGammaStr[32];
+    char bottomScreenFilterGammaStrNight[32];
     char bottomScreenFilterContrastStr[32];
+    char bottomScreenFilterContrastStrNight[32];
     char bottomScreenFilterBrightnessStr[32];
+    char bottomScreenFilterBrightnessStrNight[32];
     encodedFloatToString(bottomScreenFilterGammaStr, cfg->bottomScreenFilter.gammaEnc);
+    encodedFloatToString(bottomScreenFilterGammaStrNight, cfg->bottomScreenFilterNight.gammaEnc);
     encodedFloatToString(bottomScreenFilterContrastStr, cfg->bottomScreenFilter.contrastEnc);
+    encodedFloatToString(bottomScreenFilterContrastStrNight, cfg->bottomScreenFilterNight.contrastEnc);
     encodedFloatToString(bottomScreenFilterBrightnessStr, cfg->bottomScreenFilter.brightnessEnc);
+    encodedFloatToString(bottomScreenFilterBrightnessStrNight, cfg->bottomScreenFilterNight.brightnessEnc);
 
     int n = sprintf(
         out, (const char *)config_template_ini,
@@ -653,11 +715,11 @@ static size_t saveLumaIniConfigToStr(char *out)
         cfg->hbldr3dsxTitleId, rosalinaMenuComboStr, (int)(cfg->pluginLoaderFlags & 1),
         (int)cfg->ntpTzOffetMinutes,
 
-        (int)cfg->topScreenFilter.cct, (int)cfg->bottomScreenFilter.cct,
-        topScreenFilterGammaStr, bottomScreenFilterGammaStr,
-        topScreenFilterContrastStr, bottomScreenFilterContrastStr,
-        topScreenFilterBrightnessStr, bottomScreenFilterBrightnessStr,
-        (int)cfg->topScreenFilter.invert, (int)cfg->bottomScreenFilter.invert,
+        (int)cfg->topScreenFilter.cct, (int)cfg->topScreenFilterNight.cct, (int)cfg->bottomScreenFilter.cct, (int)cfg->bottomScreenFilterNight.cct,
+        topScreenFilterGammaStr, topScreenFilterGammaStrNight, bottomScreenFilterGammaStr, bottomScreenFilterGammaStrNight,
+        topScreenFilterContrastStr, topScreenFilterContrastStrNight, bottomScreenFilterContrastStr, bottomScreenFilterContrastStrNight,
+        topScreenFilterBrightnessStr, topScreenFilterBrightnessStrNight, bottomScreenFilterBrightnessStr, bottomScreenFilterBrightnessStrNight,
+        (int)cfg->topScreenFilter.invert, (int)cfg->topScreenFilterNight.invert, (int)cfg->bottomScreenFilter.invert, (int)cfg->bottomScreenFilterNight.invert,
 
         cfg->autobootTwlTitleId, (int)cfg->autobootCtrAppmemtype,
 
@@ -769,7 +831,9 @@ bool readConfig(void)
         configData.topScreenFilter.cct = 6500; // default temp, no-op
         configData.topScreenFilter.gammaEnc = 1 * FLOAT_CONV_MULT; // 1.0f
         configData.topScreenFilter.contrastEnc = 1 * FLOAT_CONV_MULT; // 1.0f
+        configData.topScreenFilterNight = configData.topScreenFilter;
         configData.bottomScreenFilter = configData.topScreenFilter;
+        configData.bottomScreenFilterNight = configData.topScreenFilter;
         configData.autobootTwlTitleId = AUTOBOOT_DEFAULT_TWL_TID;
         ret = false;
     }

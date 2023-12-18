@@ -46,7 +46,9 @@ typedef struct CfgData {
     s16 ntpTzOffetMinutes;
 
     ScreenFilter topScreenFilter;
+    ScreenFilter topScreenFilterNight;
     ScreenFilter bottomScreenFilter;
+    ScreenFilter bottomScreenFilterNight;
 
     u64 autobootTwlTitleId;
     u8 autobootCtrAppmemtype;
@@ -147,18 +149,30 @@ static size_t LumaConfig_SaveLumaIniConfigToStr(char *out, const CfgData *cfg)
     int pinNumDigits = pinOptionToDigits[MULTICONFIG(PIN)];
 
     char topScreenFilterGammaStr[32];
+    char topScreenFilterGammaStrNight[32];
     char topScreenFilterContrastStr[32];
+    char topScreenFilterContrastStrNight[32];
     char topScreenFilterBrightnessStr[32];
+    char topScreenFilterBrightnessStrNight[32];
     floatToString(topScreenFilterGammaStr, cfg->topScreenFilter.gamma, 6, false);
+    floatToString(topScreenFilterGammaStrNight, cfg->topScreenFilterNight.gamma, 6, false);
     floatToString(topScreenFilterContrastStr, cfg->topScreenFilter.contrast, 6, false);
+    floatToString(topScreenFilterContrastStrNight, cfg->topScreenFilterNight.contrast, 6, false);
     floatToString(topScreenFilterBrightnessStr, cfg->topScreenFilter.brightness, 6, false);
+    floatToString(topScreenFilterBrightnessStrNight, cfg->topScreenFilterNight.brightness, 6, false);
 
     char bottomScreenFilterGammaStr[32];
+    char bottomScreenFilterGammaStrNight[32];
     char bottomScreenFilterContrastStr[32];
+    char bottomScreenFilterContrastStrNight[32];
     char bottomScreenFilterBrightnessStr[32];
+    char bottomScreenFilterBrightnessStrNight[32];
     floatToString(bottomScreenFilterGammaStr, cfg->bottomScreenFilter.gamma, 6, false);
+    floatToString(bottomScreenFilterGammaStrNight, cfg->bottomScreenFilterNight.gamma, 6, false);
     floatToString(bottomScreenFilterContrastStr, cfg->bottomScreenFilter.contrast, 6, false);
+    floatToString(bottomScreenFilterContrastStrNight, cfg->bottomScreenFilterNight.contrast, 6, false);
     floatToString(bottomScreenFilterBrightnessStr, cfg->bottomScreenFilter.brightness, 6, false);
+    floatToString(bottomScreenFilterBrightnessStrNight, cfg->bottomScreenFilterNight.brightness, 6, false);
 
     int n = sprintf(
         out, (const char *)config_template_ini,
@@ -180,11 +194,11 @@ static size_t LumaConfig_SaveLumaIniConfigToStr(char *out, const CfgData *cfg)
         cfg->hbldr3dsxTitleId, rosalinaMenuComboStr, (int)(cfg->pluginLoaderFlags & 1),
         (int)cfg->ntpTzOffetMinutes,
 
-        (int)cfg->topScreenFilter.cct, (int)cfg->bottomScreenFilter.cct,
-        topScreenFilterGammaStr, bottomScreenFilterGammaStr,
-        topScreenFilterContrastStr, bottomScreenFilterContrastStr,
-        topScreenFilterBrightnessStr, bottomScreenFilterBrightnessStr,
-        (int)cfg->topScreenFilter.invert, (int)cfg->bottomScreenFilter.invert,
+        (int)cfg->topScreenFilter.cct, (int)cfg->topScreenFilterNight.cct, (int)cfg->bottomScreenFilter.cct, (int)cfg->bottomScreenFilterNight.cct,
+        topScreenFilterGammaStr, topScreenFilterGammaStrNight, bottomScreenFilterGammaStr, bottomScreenFilterGammaStrNight,
+        topScreenFilterContrastStr, topScreenFilterContrastStrNight, bottomScreenFilterContrastStr, bottomScreenFilterContrastStrNight,
+        topScreenFilterBrightnessStr, topScreenFilterBrightnessStrNight, bottomScreenFilterBrightnessStr, bottomScreenFilterBrightnessStrNight,
+        (int)cfg->topScreenFilter.invert, (int)cfg->topScreenFilterNight.invert, (int)cfg->bottomScreenFilter.invert, (int)cfg->bottomScreenFilterNight.invert,
 
         cfg->autobootTwlTitleId, (int)cfg->autobootCtrAppmemtype,
 
@@ -249,7 +263,9 @@ Result LumaConfig_SaveSettings(void)
     configData.pluginLoaderFlags = PluginLoader__IsEnabled();
     configData.ntpTzOffetMinutes = (s16)lastNtpTzOffset;
     configData.topScreenFilter = topScreenFilter;
+    configData.topScreenFilterNight = topScreenFilterNight;
     configData.bottomScreenFilter = bottomScreenFilter;
+    configData.bottomScreenFilterNight = bottomScreenFilterNight;
     configData.autobootTwlTitleId = autobootTwlTitleId;
     configData.autobootCtrAppmemtype = autobootCtrAppmemtype;
 

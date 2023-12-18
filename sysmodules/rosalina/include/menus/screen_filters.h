@@ -39,7 +39,9 @@ typedef struct ScreenFilter {
 } ScreenFilter;
 
 extern ScreenFilter topScreenFilter;
+extern ScreenFilter topScreenFilterNight;
 extern ScreenFilter bottomScreenFilter;
+extern ScreenFilter bottomScreenFilterNight;
 
 void ScreenFiltersMenu_RestoreSettings(void);
 void ScreenFiltersMenu_LoadConfig(void);
