@@ -1,6 +1,11 @@
 # Luma3DS
 *Noob-proof (N)3DS "Custom Firmware"*
 
+## Todo and notes:
+- [bug] config can't be read arm9 sided, saving rosalina settings and reboot will open config menu and reset settings
+- [todo] menus for setting up and enable/disable night mode
+- [todo] menu for setting up what time you want to enab/disable night mode and implement reading and applying it
+
 ### What it is
 **Luma3DS** is a program to patch the system software of (New) Nintendo (2)3DS handheld consoles "on the fly", adding features such as per-game language settings, debugging capabilities for developers, and removing restrictions enforced by Nintendo such as the region lock.
 
