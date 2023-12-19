@@ -2,7 +2,6 @@
 *Noob-proof (N)3DS "Custom Firmware"*
 
 ## Todo and notes:
-- [bug] config can't be read arm9 sided, saving rosalina settings and reboot will open config menu and reset settings
 - [todo] menus for setting up and enable/disable night mode
 - [todo] menu for setting up what time you want to enab/disable night mode and implement reading and applying it
 
