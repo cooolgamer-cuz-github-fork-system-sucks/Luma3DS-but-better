@@ -501,7 +501,7 @@ static int configIniHandler(void* user, const char* section, const char* name, c
             return 1;
         } else if (strcmp(name, "screen_filters_top_cct_night") == 0) {
             s64 opt;
-            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 1000, 25100));
+            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 0, 25100)); // This needs to change! I put 0 because it's not implemented yet
             cfg->topScreenFilterNight.cct = (u32)opt;
             return 1;
         } else if (strcmp(name, "screen_filters_top_gamma_night") == 0) {
@@ -551,7 +551,7 @@ static int configIniHandler(void* user, const char* section, const char* name, c
             return 1;
         } else if (strcmp(name, "screen_filters_bot_cct_night") == 0) {
             s64 opt;
-            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 1000, 25100));
+            CHECK_PARSE_OPTION(parseDecIntOption(&opt, value, 0, 25100)); // This needs to change! I put 0 because it's not implemented yet
             cfg->bottomScreenFilterNight.cct = (u32)opt;
             return 1;
         } else if (strcmp(name, "screen_filters_bot_gamma_night") == 0) {
