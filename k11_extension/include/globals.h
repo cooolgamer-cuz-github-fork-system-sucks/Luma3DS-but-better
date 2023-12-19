@@ -156,9 +156,7 @@ typedef struct CfwInfo
     s16 ntpTzOffetMinutes;
 
     ScreenFiltersCfgData topScreenFilter;
-    ScreenFiltersCfgData topScreenFilterNight;
     ScreenFiltersCfgData bottomScreenFilter;
-    ScreenFiltersCfgData bottomScreenFilterNight;
 
     u64 autobootTwlTitleId;
     u8 autobootCtrAppmemtype;
