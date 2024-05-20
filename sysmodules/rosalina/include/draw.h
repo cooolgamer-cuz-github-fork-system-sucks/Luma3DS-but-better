@@ -79,6 +79,7 @@
 #define COLOR_GREEN RGB565(0x00, 0x1F, 0x00)
 #define COLOR_LIME  RGB565(0x00, 0xFF, 0x00)
 #define COLOR_BLACK RGB565(0x00, 0x00, 0x00)
+#define COLOR_GRAY  RGB8_to_565(0x7F, 0x7F, 0x7F)
 
 #define DRAW_MAX_FORMATTED_STRING_SIZE  512
 
@@ -89,6 +90,8 @@ void Draw_Unlock(void);
 
 void Draw_DrawCharacter(u32 posX, u32 posY, u32 color, char character);
 u32 Draw_DrawString(u32 posX, u32 posY, u32 color, const char *string);
+
+void ClearScreenQuickly(void);
 
 __attribute__((format(printf,4,5)))
 u32 Draw_DrawFormattedString(u32 posX, u32 posY, u32 color, const char *fmt, ...);

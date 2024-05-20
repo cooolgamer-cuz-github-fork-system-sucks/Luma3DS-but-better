@@ -61,6 +61,12 @@ typedef struct
     u32             config[32];
 }   PluginHeader;
 
+typedef struct
+{
+    char name[128];
+    bool isDefault;
+}  PluginEntry;
+
 typedef void (*OnPlgLdrEventCb_t)(s32 eventType);
 
 Result  plgLdrInit(void);

@@ -6,13 +6,21 @@
 #include "ifile.h"
 #include "ifile.h"
 #include "utils.h"
+#include "draw.h"
+#include "menu.h"
 
 // Use a global to avoid stack overflow, those structs are quite heavy
 static FS_DirectoryEntry   g_entries[10];
+static PluginEntry         g_foundPlugins[10];
 
 static char        g_path[256];
 static const char *g_dirPath = "/luma/plugins/%016llX";
 static const char *g_defaultPath = "/luma/plugins/default.3gx";
+u64                g_titleId;
+u32                g_pid;
+
+extern bool PluginChecker_isEnabled;
+extern bool PluginConverter_UseCache;
 
 // pluginLoader.s
 void        gamePatchFunc(void);
@@ -28,17 +36,430 @@ static u32     strlen16(const u16 *str)
     return strEnd - str;
 }
 
+void GetPlgSelectorSettingsPath(char *path)
+{
+    sprintf(path, "/luma/plugins/%016llX/plgldr.bin", g_titleId);
+}
+
+bool ConfirmOperation(const char *message)
+{
+    do
+    {
+        u32 posY;
+
+        Draw_Lock();
+        Draw_ClearFramebuffer();
+        Draw_DrawString(10, 10, COLOR_TITLE, "Confirmation");
+        posY = Draw_DrawString(30, 30, COLOR_WHITE, message);
+        posY = Draw_DrawString(30, posY + 30, COLOR_WHITE, "Press [A] to confirm, press [B] to cancel.");
+        Draw_FlushFramebuffer();
+        Draw_Unlock();
+
+        u32 keys;
+        do {
+            keys = waitComboWithTimeout(1000);
+        } while(keys == 0 && !menuShouldExit);
+
+        if(keys & KEY_A)
+        {
+            return true;
+        }
+        else if(keys & KEY_B)
+        {
+            return false;
+        }
+    } while(!menuShouldExit);
+
+    return false;
+}
+
+void LoadPlgSelectorSettings(u8 *defaultPlgIndex, PluginEntry *entries, u8 count)
+{
+    IFile file;
+    char path[256];
+    u64 size;
+    u64 total;
+
+    *defaultPlgIndex = 0xFF;
+
+    GetPlgSelectorSettingsPath(path);
+
+    if(R_SUCCEEDED(IFile_Open(&file, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""), fsMakePath(PATH_ASCII, path), FS_OPEN_READ)))
+    {
+        if(R_SUCCEEDED(IFile_GetSize(&file, &size)))
+        {
+            static u8 buffer[2048];
+            IFile_Read(&file, &total, buffer, 2048);
+
+            static PluginEntry tmp[10];
+            memcpy(tmp, entries, sizeof(PluginEntry) * count);
+
+            *defaultPlgIndex = buffer[0];
+
+            u32 index = 0;
+            for(u32 i = sizeof(u8); i < total; )
+            {
+                const char *name = (char *)(buffer + i);
+
+                for(u32 j = 0; j < count; j++)
+                {
+                    if(strcmp(name, tmp[j].name) == 0)
+                    {
+                        entries[index++] = tmp[j];
+                        tmp[j].name[0] = 0;
+                        break;
+                    }
+                }
+
+                i += strlen(name) + 1;
+            }
+
+            // Invalid index
+            if(index <= *defaultPlgIndex)
+            {
+                *defaultPlgIndex = 0xFF;
+            }
+
+            // New plugins
+            for(u32 i = 0; i < count; i++)
+            {
+                if(tmp[i].name[0] != 0)
+                {
+                    // entries[index++] = tmp[i];
+                    memcpy(&entries[index++], &tmp[i], sizeof(PluginEntry));
+                    tmp[i].name[0] = 0;
+                }
+            }
+        }
+
+        IFile_Close(&file);
+    }
+}
+
+void SavePluginSelectorSettings(const PluginEntry *entries, u8 count)
+{
+    IFile file;
+    u64 total;
+    char path[256];
+
+    GetPlgSelectorSettingsPath(path);
+
+    if(R_SUCCEEDED(IFile_Open(&file, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""), fsMakePath(PATH_ASCII, path), FS_OPEN_CREATE | FS_OPEN_WRITE)))
+    {
+        IFile_SetSize(&file, 0);
+
+        // Reserve 1 byte for default plugin index
+        u8 max = 0xFF;
+        IFile_Write(&file, &total, &max, sizeof(u8), FS_WRITE_FLUSH);
+
+        for(u8 i = 0; i < count; i++)
+        {
+            const PluginEntry *entry = &entries[i];
+            IFile_Write(&file, &total, &entry->name, strlen(entry->name) + 1, FS_WRITE_FLUSH);
+
+            // Write index of default plugin to the first byte
+            if(entry->isDefault)
+            {
+                u32 oldPos = file.pos;
+                file.pos = 0;
+                IFile_Write(&file, &total, &i, sizeof(u8), FS_WRITE_FLUSH);
+                file.pos = oldPos;
+            }
+        }
+
+        IFile_Close(&file);
+    }
+}
+
+void FileOptions(PluginEntry *entries, u8 *count, u8 index)
+{
+    /* Options list structure */
+    struct {
+        const char *name;
+        bool enabled;
+    } options[] = {
+        {"Remove this file", true},
+        {"Set as default plugin", true},
+        {"Remove from default", false}
+    };
+
+    const char *name = entries[index].name;
+    char message[256];
+    const u32 nbOptions = sizeof(options) / sizeof(options[0]);
+    u8 selected = 0;
+
+    sprintf(message, "Choose option for '%s'", name);
+
+    ClearScreenQuickly();
+
+    // Init options status
+    if(entries[index].isDefault)
+    {
+        // Set as default option
+        options[1].enabled = false;
+
+        // Remove from default option
+        options[2].enabled = true;
+    }
+
+    do
+    {
+        u32 posY;
+
+        Draw_Lock();
+        Draw_ClearFramebuffer();
+        Draw_DrawString(10, 10, COLOR_TITLE, "Plugin selector");
+        posY = Draw_DrawString(20, 30, COLOR_LIME, message);
+
+        posY += 5;
+
+        for(u8 i = 0; i < nbOptions; i++)
+        {
+            Draw_DrawCharacter(10, posY + 14, COLOR_TITLE, i == selected ? '>' : ' ');
+            posY = Draw_DrawString(30, posY + 14, options[i].enabled ? COLOR_WHITE : COLOR_GRAY, options[i].name);
+        }
+        Draw_FlushFramebuffer();
+        Draw_Unlock();
+
+        u32 keys;
+        do {
+            keys = waitComboWithTimeout(1000);
+        } while(keys == 0 && !menuShouldExit);
+
+        if((keys & KEY_A) && options[selected].enabled)
+        {
+            if(selected == 0)
+            {
+                if(ConfirmOperation("Are you sure you want to remove this file?"))
+                {
+                    FS_Archive sdmc;
+
+                    if(R_SUCCEEDED(FSUSER_OpenArchive(&sdmc, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, ""))))
+                    {
+                        char path[256];
+
+                        sprintf(path, "/luma/plugins/%016llX/%s", g_titleId, name);
+
+                        FSUSER_DeleteFile(sdmc, fsMakePath(PATH_ASCII, path));
+                        FSUSER_CloseArchive(sdmc);
+                    }
+
+                    for(u8 i = index; i < *count - 1; i++)
+                    {
+                        entries[i] = entries[i + 1];
+                    }
+
+                    *count -= 1;
+
+                    // Prevent to be removed the last file
+                    if(*count == 1)
+                    {
+                        // Remove file option
+                        options[0].enabled = false;
+                    }
+
+                    // No operations are available for this file
+                    break;
+                }
+            }
+            else if(selected == 1)
+            {
+                if(ConfirmOperation("Are you sure you want to set this plugin as default?"))
+                {
+                    for(u8 i = 0; i < *count; i++)
+                    {
+                        entries[i].isDefault = false;
+                    }
+                    entries[index].isDefault = true;
+
+                    // Set as default plugin option
+                    options[1].enabled = false;
+
+                    // Remove from default plugin option
+                    options[2].enabled = true;
+                }
+            }
+            else if(selected == 2)
+            {
+                if(ConfirmOperation("Are you sure you want to remove this plugin from default?"))
+                {
+                    entries[index].isDefault = false;
+
+                    // Set as default plugin option
+                    options[1].enabled = true;
+
+                    // Remove from default plugin option
+                    options[2].enabled = false;
+                }
+            }
+        }
+        else if(keys & KEY_B)
+        {
+            break;
+        }
+        else if(keys & KEY_DOWN)
+        {
+            if(++selected >= nbOptions)
+                selected = 0;
+        }
+        else if(keys & KEY_UP)
+        {
+            if(selected-- <= 0)
+                selected = nbOptions - 1;
+        }
+    } while(!menuShouldExit);
+}
+
+static char *AskForFileName(PluginEntry *entries, u8 count)
+{
+    char *filename = NULL;
+    u8 selected = 0;
+    s8 holding = -1;
+
+    if(count == 1)
+        return entries[0].name;
+
+    u8 defaultPlgIndex = 0;
+    LoadPlgSelectorSettings(&defaultPlgIndex, entries, count);
+
+    if(defaultPlgIndex != 0xFF)
+    {
+        PluginEntry *entry = &entries[defaultPlgIndex];
+  
+        if(!(HID_PAD & KEY_SELECT))
+        {
+            PluginEntry *entry = &entries[defaultPlgIndex];
+            entry->isDefault = true;
+
+            return entry->name;
+        }
+
+        entry->isDefault = true;
+    }
+
+    menuEnter();
+
+    ClearScreenQuickly();
+
+    do
+    {
+        u32 posY;
+
+        Draw_Lock();
+        Draw_ClearFramebuffer();
+        Draw_DrawString(10, 10, COLOR_TITLE, "Plugin selector");
+        posY = Draw_DrawString(30, 30, COLOR_WHITE, "Some 3gx files were found.");
+        posY = Draw_DrawString(30, posY + 10, COLOR_WHITE, "[A] Select, [B] Cancel, [X] Options, [Y] Reorder");
+        posY = Draw_DrawString(20, posY + 15, COLOR_LIME, "Plugins:");
+
+        for(u8 i = 0; i < count; i++)
+        {
+            if(holding == -1)
+            {
+                Draw_DrawCharacter(10, posY + 15, COLOR_TITLE, i == selected ? '>' : ' ');
+            }
+            if(i == holding)
+            {
+                posY = Draw_DrawString(33, posY + 14, COLOR_WHITE, entries[i].name);
+            }
+            else
+            {
+                char buf[256];
+                bool isDefault = entries[i].isDefault;
+
+                sprintf(buf, "  %s%s", entries[i].name, isDefault ? " [Default]" : "");
+                posY = Draw_DrawString(30, posY + 15, COLOR_WHITE, buf);
+            }
+        }
+
+        Draw_FlushFramebuffer();
+        Draw_Unlock();
+
+        u32 keys;
+        do {
+            keys = waitComboWithTimeout(1000);
+        } while(keys == 0 && !menuShouldExit);
+
+        if(keys & KEY_A)
+        {
+            if(holding == -1)
+            {
+                filename = entries[selected].name;
+                break;
+            }
+        }
+        else if(keys & KEY_B)
+        {
+            break;
+        }
+        else if (keys & KEY_X)
+        {
+            if(holding == -1)
+            {
+                FileOptions(entries, &count, selected);
+                
+                if(count < selected + 1)
+                    selected = count - 1;
+            }
+        }
+        else if (keys & KEY_Y)
+        {
+            if(holding == -1)
+                holding = selected;
+            else
+            {
+                selected = holding;
+                holding = -1;
+            }
+        }
+        else if(keys & KEY_DOWN)
+        {
+            if(holding == -1 && ++selected >= count)
+                selected = 0;
+            else if(holding != -1 && holding < count - 1)
+            {
+                PluginEntry tmp = entries[holding];
+                entries[holding] = entries[holding + 1];
+                entries[holding + 1] = tmp;
+                holding++;
+            }
+        }
+        else if(keys & KEY_UP)
+        {
+            if(holding == -1 && selected-- <= 0)
+                selected = count - 1;
+            else if(holding > 0)
+            {
+                PluginEntry tmp = entries[holding];
+                entries[holding] = entries[holding - 1];
+                entries[holding - 1] = tmp;
+                holding--;
+            }
+        }
+    } while(!menuShouldExit);
+
+    menuLeave();
+
+    SavePluginSelectorSettings(entries, count);
+
+    return filename;
+}
+
 static Result   FindPluginFile(u64 tid)
 {
     char                filename[256];
     u32                 entriesNb = 0;
-    bool                found = false;
+
     Handle              dir = 0;
     Result              res;
     FS_Archive          sdmcArchive = 0;
     FS_DirectoryEntry * entries = g_entries;
-    
+
+    u8                  foundPluginCount = 0;
+    PluginEntry       * foundPlugins = g_foundPlugins;
+
     memset(entries, 0, sizeof(g_entries));
+    memset(foundPlugins, 0, sizeof(g_foundPlugins));
     sprintf(g_path, g_dirPath, tid);
 
     if (R_FAILED((res = FSUSER_OpenArchive(&sdmcArchive, ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, "")))))
@@ -48,7 +469,7 @@ static Result   FindPluginFile(u64 tid)
         goto exit;
 
     strcat(g_path, "/");
-    while (!found && R_SUCCEEDED(FSDIR_Read(dir, &entriesNb, 10, entries)))
+    while (foundPluginCount < 10 && R_SUCCEEDED(FSDIR_Read(dir, &entriesNb, 10, entries)))
     {
         if (entriesNb == 0)
             break;
@@ -58,6 +479,7 @@ static Result   FindPluginFile(u64 tid)
         for (u32 i = 0; i < entriesNb; ++i)
         {
             FS_DirectoryEntry *entry = &entries[i];
+            char path[512];
 
             // If entry is a folder, skip it
             if (entry->attributes & 1)
@@ -78,19 +500,34 @@ static Result   FindPluginFile(u64 tid)
             if (units == -1)
                 continue;
             filename[units] = 0;
-            found = true;
-            break;
+
+            if(foundPluginCount >= 10) 
+                break;
+
+            strcpy(foundPlugins[foundPluginCount].name, filename);
+
+            sprintf(path, "%s%s", g_path, filename);
+            foundPluginCount++;
         }
     }
 
-    if (!found)
+    if (!foundPluginCount)
         res = MAKERESULT(28, 4, 0, 1018);
     else
     {
-        u32 len = strlen(g_path);
-        filename[256 - len] = 0;
-        strcat(g_path, filename);
-        PluginLoaderCtx.pluginPath = g_path;
+        char *name = AskForFileName(foundPlugins, foundPluginCount);
+
+        if (!name)
+        {
+            res = MAKERESULT(28, 4, 0, 1018);
+        }
+        else
+        {
+            u32 len = strlen(g_path);
+            name[sizeof(((PluginEntry *)NULL)->name) - len] = 0;
+            strcat(g_path, name);
+            PluginLoaderCtx.pluginPath = g_path;
+        }
     }
 
 exit:
