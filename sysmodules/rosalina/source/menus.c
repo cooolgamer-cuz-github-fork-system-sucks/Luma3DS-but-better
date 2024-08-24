@@ -210,7 +210,8 @@ void RosalinaMenu_ShowCredits(void)
                 "People who made this fork possible:\n"
                 "  DullPointer, Sono, Nutez, cooolgamer,\n"
                 "  DeathChaos25, truedread, Gruetzig,\n"
-                "  Tekito-256, exalented, Alexyo21"
+                "  Tekito-256, exalented, Alexyo21,\n"
+                "  Pixel-Pop"
             ));
 
         Draw_FlushFramebuffer();
